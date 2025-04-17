@@ -104,82 +104,75 @@ int create_segment(MemoryHandler* handler, const char* name, int start, int size
     return -1;
 }
 
-int remove_segment(MemoryHandler* handler, const char* name){
-    
-    Segment* seg=hashmap_get(handler->allocated,name);
+int remove_segment(MemoryHandler* handler, const char* name) {
+    Segment* seg = hashmap_get(handler->allocated, name);
     if (!seg) return -1;
-    if (hashmap_remove(handler->allocated, name) == -1) {
-        return -1; 
-    }
-    Segment* temp=handler->free_list;
-    Segment* prev_seg=NULL;
-    Segment* next_seg=NULL;
-    while (temp){
-        if ((temp->start) == (seg->start)-(temp->size)){
-            prev_seg=temp;
-        }
-        if ((temp->start) == (seg->start)+(seg->size)){
-            next_seg=temp;
-        }
-        temp=temp->next;
-    }
-    if (!prev_seg && !next_seg){
-        Segment* temp=handler->free_list;
-        Segment* prec=NULL;
-        while (temp){
-            
-            if (temp->start > seg->start){
-                
-                if (prec){
-                    prec->next=seg;
-                }
-                
-                else{
-                    handler->free_list=seg;
-                }
-                
-                seg->next=temp;
-                return 0;
-            }
-            prec=temp;
-            temp=temp->next;
-        }
 
-        if (prec){
-            prec->next=seg;
-            seg->next=NULL;
+    // Remove the segment from the hashmap
+    if (hashmap_remove(handler->allocated, name) == -1) return -1;
+
+    Segment* temp = handler->free_list;
+    Segment* prev_free = NULL;
+    Segment* prev_adjacent = NULL;
+    Segment* next_adjacent = NULL;
+
+    // Find adjacent segments
+    while (temp) {
+        if (temp->start + temp->size == seg->start) {
+            prev_adjacent = temp;
         }
-        
-        else{
-            handler->free_list=seg;
-            seg->next=NULL;
+        if (seg->start + seg->size == temp->start) {
+            next_adjacent = temp;
+            break;
         }
-        return 0;
-    }
-    
-    if (!prev_seg && next_seg){
-        
-        seg->size +=  next_seg->size;
-        seg->next=next_seg->next;
-        free(next_seg);
-        return 0;
+        prev_free = temp;
+        temp = temp->next;
     }
 
-    if (prev_seg && !next_seg){
-        prev_seg->size += seg->size;
-        prev_seg->next=NULL;
-        free(prev_seg);
-        return 0;
+    // Merge logic
+    if (!prev_adjacent && !next_adjacent) {
+        temp = handler->free_list;
+        prev_free = NULL;
+        while (temp && temp->start < seg->start) {
+            prev_free = temp;
+            temp = temp->next;
+        }
 
-    }
+        seg->next = temp;
+        if (prev_free) {
+            prev_free->next = seg;
+        } else {
+            handler->free_list = seg;
+        }
+        // CHANGE: Don't free seg here since it's now part of the free list
+    } else if (!prev_adjacent && next_adjacent) {
+        seg->size += next_adjacent->size;
+        seg->next = next_adjacent->next;
 
-    if (prev_seg && next_seg){
-        
-        prev_seg->size+=seg->size + next_seg->size;
-        prev_seg->next=next_seg->next;
-        free(next_seg);
+        if (prev_free) {
+            prev_free->next = seg;
+        } else {
+            handler->free_list = seg;
+        }
+
+        free(next_adjacent);
+        // CHANGE: Don't free seg here since it's now part of the free list
+    } else if (prev_adjacent && !next_adjacent) {
+        prev_adjacent->size += seg->size;
+        // CHANGE: Add explicit free here since seg is merged with prev_adjacent
         free(seg);
-        return 0;
+    } else if (prev_adjacent && next_adjacent) {
+        prev_adjacent->size += seg->size + next_adjacent->size;
+        prev_adjacent->next = next_adjacent->next;
+
+        free(next_adjacent);
+        // CHANGE: Add explicit free here since seg is merged with prev_adjacent
+        free(seg);
     }
-    return -1;
+
+    // CHANGE: Remove this unconditional free that was causing double-free
+    // free(seg);
+    // seg = NULL; // Prevent dangling pointer
+
+    return 0;
 }

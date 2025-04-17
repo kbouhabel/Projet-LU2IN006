@@ -14,8 +14,17 @@ tableHachage.o: tableHachage.c tableHachage.h
 test_tableHachage.o: test_tableHachage.c tableHachage.h
 	$(CC) $(CFLAGS) -c test_tableHachage.c
 
+test: gestionMemoire.o test_gestionMemoire.o tableHachage.o
+	gcc -o test gestionMemoire.o test_gestionMemoire.o tableHachage.o -lm
+
+gestionMemoire.o: gestionMemoire.c gestionMemoire.h
+	gcc -c gestionMemoire.c
+
+test_gestionMemoire.o: test_gestionMemoire.c gestionMemoire.h
+	gcc -c test_gestionMemoire.c
+
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(TARGET) *.o test
 
 run: all
 	./$(TARGET)

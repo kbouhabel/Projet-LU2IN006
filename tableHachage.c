@@ -52,21 +52,23 @@ void* hashmap_get(HashMap* map, const char* key){
     return NULL;
 }
 
-int hashmap_remove(HashMap* map, const char* key){
-    unsigned long index= simple_hash(key);
-    for (unsigned long i=0; i<TABLE_SIZE;i++){
+int hashmap_remove(HashMap* map, const char* key) {
+    unsigned long index = simple_hash(key);
+    for (unsigned long i = 0; i < TABLE_SIZE; i++) {
         unsigned long new_index = (index + i) % TABLE_SIZE;
         if (map->table[new_index].key == NULL) {
             continue;
         }
 
         if (map->table[new_index].key == TOMBSTONE) {
-            continue; 
+            continue;
         }
 
         if (strcmp(map->table[new_index].key, key) == 0) {
             free(map->table[new_index].key);
             map->table[new_index].key = TOMBSTONE;
+
+            // Do not free the value here
             map->table[new_index].value = TOMBSTONE;
             return 0;
         }
@@ -74,9 +76,14 @@ int hashmap_remove(HashMap* map, const char* key){
     return -1;
 }
 
-void hashmap_destroy(HashMap* map){
-    for (int i=0; i<TABLE_SIZE;i++){
-        free(map->table[i].key);
+void hashmap_destroy(HashMap* map) {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        if (map->table[i].key && map->table[i].key != TOMBSTONE) {
+            free(map->table[i].key);
+        }
+        if (map->table[i].value && map->table[i].value != TOMBSTONE) {
+            free(map->table[i].value);
+        }
     }
     free(map->table);
     free(map);
