@@ -1,10 +1,15 @@
 CC = gcc
 CFLAGS = -Wall
 TARGET = test_tableHachage
+TARGET2= test_gestionMemoire
 OBJS = tableHachage.o test_tableHachage.o
+OBJS2 = gestionMemoire.o test_gestionMemoire.o tableHachage.o
 
-all: $(TARGET)
 
+all: $(TARGET) $(TARGET2)
+
+$(TARGET2): $(OBJS2)
+	$(CC) $(CFLAGS) -o $(TARGET2) $(OBJS2)
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
@@ -13,9 +18,6 @@ tableHachage.o: tableHachage.c tableHachage.h
 
 test_tableHachage.o: test_tableHachage.c tableHachage.h
 	$(CC) $(CFLAGS) -c test_tableHachage.c
-
-test: gestionMemoire.o test_gestionMemoire.o tableHachage.o
-	gcc -o test gestionMemoire.o test_gestionMemoire.o tableHachage.o -lm
 
 gestionMemoire.o: gestionMemoire.c gestionMemoire.h
 	gcc -c gestionMemoire.c
