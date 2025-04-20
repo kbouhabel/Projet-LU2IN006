@@ -1,7 +1,6 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include <stdint.h>
-#include "tableHachage.h"
 #include "gestionMemoire.h"
 
 typedef struct {
@@ -18,4 +17,10 @@ typedef struct {
     HashMap *labels;               // Labels -> indices in code_instructions
     HashMap *memory_locations;     // Variable names -> memory addresses
 } ParserResult;
+
+Instruction *parse_data_instruction(const char *line, HashMap *memory_locations);
+Instruction *parse_code_instruction(const char *line, HashMap *labels, int code_count);
+ParserResult *parse(const char *filename);
+void free_parser_result(ParserResult *result);
+
 #endif // PARSER_H

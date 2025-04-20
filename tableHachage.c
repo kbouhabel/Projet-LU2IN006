@@ -27,7 +27,7 @@ HashMap* hashmap_create(){
     return map;
 }
 
-int hashmap_insert(HashMap* map , const char* key, void* value){
+int hashmap_insert(HashMap* map, const char* key, void* value) {
     unsigned long index = simple_hash(key);
     for (unsigned long i = 0; i < TABLE_SIZE; i++) {
         unsigned long new_index = (index + i) % TABLE_SIZE;
@@ -35,6 +35,7 @@ int hashmap_insert(HashMap* map , const char* key, void* value){
         if (map->table[new_index].key == NULL || map->table[new_index].key == TOMBSTONE) {
             map->table[new_index].key = strdup(key); 
             map->table[new_index].value = value;
+            printf("Inserted key: %s, value: %p\n", key, value);
             return 0;
         }
     }
@@ -79,9 +80,11 @@ int hashmap_remove(HashMap* map, const char* key) {
 void hashmap_destroy(HashMap* map) {
     for (int i = 0; i < TABLE_SIZE; i++) {
         if (map->table[i].key && map->table[i].key != TOMBSTONE) {
+            printf("Freeing key: %s\n", map->table[i].key);
             free(map->table[i].key);
         }
         if (map->table[i].value && map->table[i].value != TOMBSTONE) {
+            printf("Freeing value: %p\n", map->table[i].value);
             free(map->table[i].value);
         }
     }
